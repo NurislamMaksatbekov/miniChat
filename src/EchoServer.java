@@ -22,7 +22,13 @@ public class EchoServer {
         try(var server = new ServerSocket(port)){
             while (!server.isClosed()){
                 Socket clientSocket = server.accept();
-                pool.submit(() -> service.handle(clientSocket));
+                pool.submit(() -> {
+                    try {
+                        service.handle(clientSocket);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
         }catch (IOException e){
             System.out.printf("Вероятнее всего порт %s занят.%n", port);
