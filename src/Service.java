@@ -1,9 +1,6 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
+import java.util.*;
 
 public class Service {
 
@@ -17,20 +14,24 @@ public class Service {
         try (socket;
              var reader = getReader(socket);
              PrintWriter writer = getWriter(socket)){
+            sendResponse("Your number is " + storage.get(socket), writer);
             storage.put(socket, getNumber());
             while (true){
                 var message = reader.nextLine().strip();
-                if(isEmptyMsg(message) || isQuiteMsg(message)){
-                    System.out.printf("%s left the chat", getNumber());
-                }
                 for (Socket connection: storage.keySet()) {
-                    if(connection != storage){
-                        sendResponse(storage.get(socket) + ")" + message, getWriter(connection)); }
-
+                    if(!Objects.equals(connection, storage) && !isEmptyMsg(message)){
+                        sendResponse(storage.get(socket) + ") " + message, getWriter(connection)); }
+                }
+                if(isQuiteMsg(message)){
+                    System.out.printf("%s left the chat", getNumber());
+                    storage.remove(socket);
+                }else if(isEmptyMsg(message)){
+                    sendResponse("You have to type something to send a message!", getWriter(socket));
                 }
             }
         }catch (NoSuchElementException e) {
             System.out.println("Client dropped connection");
+            storage.remove(socket);
         }catch (IOException e){
             e.printStackTrace();
         }
